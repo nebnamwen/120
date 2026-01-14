@@ -39,28 +39,6 @@ glEnable(GL_DEPTH_TEST)
 gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
 glTranslatef(0.0,0.0, -5)
 
-faces = []
-for d in range(3):
-    for v in (1,-1):
-        f = numpy.array([0,0,0])
-        f[d] = v
-        faces.append(f)
-
-adjacent = min([ numpy.linalg.norm(f - faces[0]) for f in faces if f is not faces[0] ])
-        
-facesforface = { tuple(f): [ f2 for f2 in faces if numpy.isclose(numpy.linalg.norm(f - f2), adjacent) ] for f in faces }
-edgesforface = { tuple(f): [ f + f2 for f2 in facesforface[tuple(f)] ] for f in faces }
-
-facesforedge = defaultdict(list)
-for f in edgesforface:
-    for e in edgesforface[f]:
-        facesforedge[tuple(e)].append(numpy.array(f))
-
-vertsforedge = { e: [ facesforedge[e][0] + facesforedge[e][1] + f3 for f3 in
-                      [ f for f in facesforface[tuple(facesforedge[e][0])]
-                        if tuple(f) in map(tuple, facesforface[tuple(facesforedge[e][1])]) ]
-                     ] for e in facesforedge }
-
 class layer():
     def __init__(self):
         self.triverts = []
@@ -88,22 +66,23 @@ class layer():
             self.linecolors.append(color)
 
     @staticmethod
-    def _bindbuffer(b, l):
+    def _bufferdata(b, l):
         glBindBuffer (GL_ARRAY_BUFFER, b)
         data = numpy.concatenate(l, dtype=numpy.float32)
         glBufferData (GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
 
     def draw(self):
         if self.tridirty:
-            layer._bindbuffer(self.trivertbuf, self.triverts)
-            layer._bindbuffer(self.tricolbuf, self.tricolors)
+            layer._bufferdata(self.trivertbuf, self.triverts)
+            layer._bufferdata(self.tricolbuf, self.tricolors)
             self.tridirty = False
 
         if self.linedirty:
-            layer._bindbuffer(self.linevertbuf, self.lineverts)
-            layer._bindbuffer(self.linecolbuf, self.linecolors)
+            layer._bufferdata(self.linevertbuf, self.lineverts)
+            layer._bufferdata(self.linecolbuf, self.linecolors)
             self.linedirty = False
 
+        # draw triangles
         glBindBuffer(GL_ARRAY_BUFFER, self.trivertbuf)
         glVertexPointer(3, GL_FLOAT, 0, None)
 
@@ -112,6 +91,7 @@ class layer():
     
         glDrawArrays (GL_TRIANGLES, 0, len(self.triverts))
 
+        # draw lines
         glBindBuffer (GL_ARRAY_BUFFER, self.linevertbuf)
         glVertexPointer (3, GL_FLOAT, 0, None)
 
@@ -122,6 +102,28 @@ class layer():
 
 layers = [ layer() for i in range(1) ]
         
+faces = []
+for d in range(3):
+    for v in (1,-1):
+        f = numpy.array([0,0,0])
+        f[d] = v
+        faces.append(f)
+
+adjacent = min([ numpy.linalg.norm(f - faces[0]) for f in faces if f is not faces[0] ])
+        
+facesforface = { tuple(f): [ f2 for f2 in faces if numpy.isclose(numpy.linalg.norm(f - f2), adjacent) ] for f in faces }
+edgesforface = { tuple(f): [ f + f2 for f2 in facesforface[tuple(f)] ] for f in faces }
+
+facesforedge = defaultdict(list)
+for f in edgesforface:
+    for e in edgesforface[f]:
+        facesforedge[tuple(e)].append(numpy.array(f))
+
+vertsforedge = { e: [ facesforedge[e][0] + facesforedge[e][1] + f3 for f3 in
+                      [ f for f in facesforface[tuple(facesforedge[e][0])]
+                        if tuple(f) in map(tuple, facesforface[tuple(facesforedge[e][1])]) ]
+                     ] for e in facesforedge }
+
 for f in faces:
     for e in edgesforface[tuple(f)]:
         for v in vertsforedge[tuple(e)]:
