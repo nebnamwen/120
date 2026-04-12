@@ -5,13 +5,14 @@ from OpenGL.GL import shaders
 from OpenGL.GLU import *
 from ctypes import *
 from collections import defaultdict
+from itertools import permutations
 
 VS = '''
 void main ()
 {
     vec4 position = gl_ModelViewMatrix * gl_Vertex;
     gl_Position = gl_ProjectionMatrix * vec4(position.xyz / (position.w + 1.0), 1.0);
-    gl_FrontColor = gl_Color;
+    gl_FrontColor = gl_Color * (position.w + 1.0) * 0.5;
 }
 '''
 
@@ -23,7 +24,7 @@ void main()
 '''
 
 pygame.init()
-display = (800,600)
+display = (1200,600)
 pygame.display.set_mode (display, pygame.OPENGL|pygame.DOUBLEBUF, 24)
 glViewport (0, 0, *display)
 
@@ -38,7 +39,7 @@ glEnableClientState (GL_COLOR_ARRAY)
 
 glEnable(GL_DEPTH_TEST)
 gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
-glTranslatef(0.0,0.0, -0.25)
+glTranslatef(0.0,0.0, -0.15)
 
 class layer():
     def __init__(self):
@@ -104,11 +105,42 @@ class layer():
 layers = [ layer() for i in range(1) ]
 
 cells = {}
+
 for d in range(4):
     for v in (1,-1):
         c = numpy.array([0,0,0,0])
         c[d] = v
         cells["".join(["0Ii"[e] for e in c])] = c
+
+for x in (-1,1):
+    for y in (-1,1):
+        for z in (-1,1):
+            for w in (-1,1):
+                cells["".join(["_Hh"[e] for e in (x,y,z,w)])] = numpy.array([x,y,z,w]) * 0.5
+
+phi = (1 + 5 ** 0.5) / 2
+
+phikeys = [ (phi / 2, "P", "p"),
+            (0.5, "H", "h"),
+            (0.5 / phi, "U", "u"),
+            (0, "0") ]
+
+def is_even_permutation(p):
+    inversions = 0
+    for i in range(len(p)):
+        for j in range(i + 1, len(p)):
+            if p[i] > p[j]:
+                inversions += 1
+    return inversions % 2 == 0
+even_perms = [p for p in permutations(range(4)) if is_even_permutation(p)]
+
+for p in (-1,1):
+    for h in (-1,1):
+        for u in (-1,1):
+            phuz = (p,h,u,1)
+            for perm in even_perms:
+                cells["".join([phikeys[i][phuz[i]] for i in perm])] = numpy.array([phikeys[i][0]*phuz[i] for i in perm])
+
 # print(cells)
 
 first = next(iter(cells))
@@ -177,7 +209,7 @@ while running:
             running = False
 
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glRotatef(1, 3, 1, 1)
+    glRotatef(0.5, 3, 1, 1)
 
     for l in layers:
         l.draw()
