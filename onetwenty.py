@@ -12,7 +12,7 @@ void main ()
 {
     vec4 position = gl_ModelViewMatrix * gl_Vertex;
     gl_Position = gl_ProjectionMatrix * vec4(position.xyz / (position.w + 1.0), 1.0);
-    gl_FrontColor = gl_Color * (position.w + 1.0) * 0.5;
+    gl_FrontColor = gl_Color * sqrt((position.w + 1.0) * 0.5);
 }
 '''
 
@@ -24,7 +24,7 @@ void main()
 '''
 
 pygame.init()
-display = (1200,600)
+display = (800,600)
 pygame.display.set_mode (display, pygame.OPENGL|pygame.DOUBLEBUF, 24)
 glViewport (0, 0, *display)
 
@@ -38,8 +38,9 @@ glEnableClientState (GL_VERTEX_ARRAY)
 glEnableClientState (GL_COLOR_ARRAY)
 
 glEnable(GL_DEPTH_TEST)
-gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
-glTranslatef(0.0,0.0, -0.15)
+glMatrixMode(GL_PROJECTION)
+gluPerspective(60, (display[0]/display[1]), 0.1, 50.0)
+glMatrixMode(GL_MODELVIEW)
 
 class layer():
     def __init__(self):
@@ -201,6 +202,8 @@ for e, l in edgeverts.items():
 for e in edges:
     layers[0].line(verts[edgeverts[e][0]], verts[edgeverts[e][1]], numpy.array([1,1,1]))
 
+view_matrix = numpy.identity(4)
+
 running = True
 while running:
 
@@ -208,8 +211,28 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    keys = pygame.key.get_pressed()
+
+    transform = numpy.zeros((4,4))
+    if keys[pygame.K_e]: transform[0][1] += 0.02
+    if keys[pygame.K_q]: transform[0][1] -= 0.02
+    if keys[pygame.K_RIGHT]: transform[0][2] += 0.02
+    if keys[pygame.K_LEFT]: transform[0][2] -= 0.02
+    if keys[pygame.K_UP]: transform[1][2] += 0.02
+    if keys[pygame.K_DOWN]: transform[1][2] -= 0.02
+    if keys[pygame.K_a]: transform[0][3] += 0.01
+    if keys[pygame.K_d]: transform[0][3] -= 0.01
+    if keys[pygame.K_LCTRL]: transform[1][3] += 0.01
+    if keys[pygame.K_LSHIFT]: transform[1][3] -= 0.01
+    if keys[pygame.K_w]: transform[2][3] += 0.01
+    if keys[pygame.K_s]: transform[2][3] -= 0.01
+    
+    transform = numpy.identity(4) + transform - transform.T
+    view_matrix, _ = numpy.linalg.qr(transform.dot(view_matrix))
+    
+    glLoadMatrixf(numpy.concatenate(view_matrix.T, dtype=numpy.float32))
+    
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glRotatef(0.5, 3, 1, 1)
 
     for l in layers:
         l.draw()
