@@ -263,18 +263,18 @@ while running:
     keys = pygame.key.get_pressed()
 
     transform = numpy.zeros((4,4))
-    if keys[pygame.K_e]: transform[0][1] += 0.02
-    if keys[pygame.K_q]: transform[0][1] -= 0.02
-    if keys[pygame.K_RIGHT]: transform[0][2] += 0.02
-    if keys[pygame.K_LEFT]: transform[0][2] -= 0.02
-    if keys[pygame.K_UP]: transform[1][2] += 0.02
-    if keys[pygame.K_DOWN]: transform[1][2] -= 0.02
-    if keys[pygame.K_a]: transform[0][3] += 0.01
+    if keys[pygame.K_q]: transform[0][1] += 0.02
+    if keys[pygame.K_e]: transform[0][1] -= 0.02
+    if keys[pygame.K_LEFT]: transform[0][2] += 0.02
+    if keys[pygame.K_RIGHT]: transform[0][2] -= 0.02
+    if keys[pygame.K_UP]: transform[1][2] -= 0.02
+    if keys[pygame.K_DOWN]: transform[1][2] += 0.02
     if keys[pygame.K_d]: transform[0][3] -= 0.01
-    if keys[pygame.K_LCTRL]: transform[1][3] += 0.01
+    if keys[pygame.K_a]: transform[0][3] += 0.01
     if keys[pygame.K_LSHIFT]: transform[1][3] -= 0.01
-    if keys[pygame.K_s]: transform[2][3] += 0.01
+    if keys[pygame.K_LCTRL]: transform[1][3] += 0.01
     if keys[pygame.K_w]: transform[2][3] -= 0.01
+    if keys[pygame.K_s]: transform[2][3] += 0.01
     
     transform = numpy.identity(4) + transform - transform.T
     view_matrix, _ = numpy.linalg.qr(transform.dot(view_matrix))
