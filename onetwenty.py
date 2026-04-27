@@ -2,21 +2,55 @@ import pygame
 import numpy
 from OpenGL.GL import *
 from OpenGL.GL import shaders
+from OpenGL.GL.EXT.geometry_shader4 import *
 from OpenGL.GLU import *
 from ctypes import *
 from collections import defaultdict
 from itertools import permutations
 
 VS = '''
+#version 120
+
 void main ()
 {
     vec4 position = gl_ModelViewMatrix * gl_Vertex;
-    gl_Position = gl_ProjectionMatrix * vec4(position.xyz / (position.w + 1.0), 1.0);
+    gl_Position = vec4(
+        atan(position.x, position.z) / (atan(1.0) * 4.0),
+        tan(asin(position.y / length(position.xyz))) / (atan(1.0) * 2.0),
+        -asin(position.w) / (atan(1.0) * 2.0),
+        1.0
+    );
+    // gl_Position = gl_ProjectionMatrix * vec4(position.xyz / (position.w + 1.0), 1.0);
     gl_FrontColor = gl_Color * sqrt((position.w + 1.0) * 0.5);
 }
 '''
 
+GS = '''
+#version 120
+#extension GL_EXT_geometry_shader : enable
+
+void main() {
+    float minx = gl_PositionIn[0].x;
+    float maxx = gl_PositionIn[0].x;
+    for(int i = 0; i < gl_VerticesIn; i++) {
+        if (gl_PositionIn[i].x < minx) { minx = gl_PositionIn[i].x; }
+        if (gl_PositionIn[i].x > maxx) { maxx = gl_PositionIn[i].x; }
+    }
+
+    if (maxx - minx <= 1.0) {
+        for(int i = 0; i < gl_VerticesIn; i++) {
+            gl_Position = gl_PositionIn[i];
+            gl_FrontColor = gl_FrontColorIn[i];
+            EmitVertex();
+        }
+        EndPrimitive();
+    }
+}
+'''
+
 FS = '''
+#version 120
+
 void main()
 {
     gl_FragColor = gl_Color;
@@ -24,23 +58,38 @@ void main()
 '''
 
 pygame.init()
-display = (800,600)
+
+display = (1200,600)
 pygame.display.set_mode (display, pygame.OPENGL|pygame.DOUBLEBUF, 24)
 glViewport (0, 0, *display)
 
-vertexShader = shaders.compileShader(VS, GL_VERTEX_SHADER)
-fragmentShader = shaders.compileShader(FS, GL_FRAGMENT_SHADER)
-shaderProgram = shaders.compileProgram(vertexShader, fragmentShader)
+print(glGetString(GL_VERSION))
+print(glGetString(GL_SHADING_LANGUAGE_VERSION))
 
+vertexShader = shaders.compileShader(VS, GL_VERTEX_SHADER)
+geometryShader = shaders.compileShader(GS, GL_GEOMETRY_SHADER)
+fragmentShader = shaders.compileShader(FS, GL_FRAGMENT_SHADER)
+
+shaderProgram = glCreateProgram()
+glAttachShader(shaderProgram, vertexShader)
+glAttachShader(shaderProgram, geometryShader)
+glAttachShader(shaderProgram, fragmentShader)
+
+glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_INPUT_TYPE_EXT, GL_LINES)
+glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_OUTPUT_TYPE_EXT, GL_LINE_STRIP)
+glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_VERTICES_OUT_EXT, 2)
+
+glLinkProgram(shaderProgram)
 glUseProgram(shaderProgram)
 
 glEnableClientState (GL_VERTEX_ARRAY)
 glEnableClientState (GL_COLOR_ARRAY)
 
 glEnable(GL_DEPTH_TEST)
-glMatrixMode(GL_PROJECTION)
-gluPerspective(60, (display[0]/display[1]), 0.1, 50.0)
-glMatrixMode(GL_MODELVIEW)
+
+# glMatrixMode(GL_PROJECTION)
+# gluPerspective(60, (display[0]/display[1]), 0.1, 50.0)
+# glMatrixMode(GL_MODELVIEW)
 
 class layer():
     def __init__(self):
@@ -224,8 +273,8 @@ while running:
     if keys[pygame.K_d]: transform[0][3] -= 0.01
     if keys[pygame.K_LCTRL]: transform[1][3] += 0.01
     if keys[pygame.K_LSHIFT]: transform[1][3] -= 0.01
-    if keys[pygame.K_w]: transform[2][3] += 0.01
-    if keys[pygame.K_s]: transform[2][3] -= 0.01
+    if keys[pygame.K_s]: transform[2][3] += 0.01
+    if keys[pygame.K_w]: transform[2][3] -= 0.01
     
     transform = numpy.identity(4) + transform - transform.T
     view_matrix, _ = numpy.linalg.qr(transform.dot(view_matrix))
