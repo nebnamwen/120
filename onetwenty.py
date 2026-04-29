@@ -13,11 +13,13 @@ VS = '''
 
 void main ()
 {
+    float PI = radians(180);
+    float PI_2 = radians(90);
     vec4 position = gl_ModelViewMatrix * gl_Vertex;
     gl_Position = vec4(
-        atan(position.x, position.z) / (atan(1.0) * 4.0),
-        tan(asin(position.y / length(position.xyz))) / (atan(1.0) * 2.0),
-        -asin(position.w) / (atan(1.0) * 2.0),
+        atan(position.x, position.z) / PI,
+        tan(asin(position.y / length(position.xyz))) / PI_2,
+        -asin(position.w) / PI_2,
         1.0
     );
     // gl_Position = gl_ProjectionMatrix * vec4(position.xyz / (position.w + 1.0), 1.0);
@@ -62,9 +64,6 @@ pygame.init()
 display = (1200,600)
 pygame.display.set_mode (display, pygame.OPENGL|pygame.DOUBLEBUF, 24)
 glViewport (0, 0, *display)
-
-print(glGetString(GL_VERSION))
-print(glGetString(GL_SHADING_LANGUAGE_VERSION))
 
 vertexShader = shaders.compileShader(VS, GL_VERTEX_SHADER)
 geometryShader = shaders.compileShader(GS, GL_GEOMETRY_SHADER)
