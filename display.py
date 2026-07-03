@@ -3,9 +3,6 @@ import numpy
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 from OpenGL.GL.EXT.geometry_shader4 import *
-# from OpenGL.GLU import *
-from ctypes import *
-from collections import defaultdict
 
 vertShader_mercator = '''
 #version 120
