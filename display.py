@@ -160,14 +160,14 @@ class layer():
 
         for v in (a,b,c):
             self.triverts.append(v)
-            self.tricolors.append(color)
+            self.tricolors.append(numpy.array(color))
 
     def line(self, a,b, color):
         self.linedirty = True
 
         for v in (a,b):
             self.lineverts.append(v)
-            self.linecolors.append(color)
+            self.linecolors.append(numpy.array(color))
 
     @staticmethod
     def _bufferdata(b, l):

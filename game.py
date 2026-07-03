@@ -1,5 +1,4 @@
 import pygame
-import numpy
 
 from geom import *
 from display import display

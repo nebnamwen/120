@@ -17,7 +17,7 @@ class go_example(game):
                            (edges[e] * (1 - x/n) + faces[fs[1]] * x/n) * x/n
                            for x in range(n+1) ]
                 for i in range(n):
-                    self.display.layers[0].line(spline[i], spline[i+1], numpy.array([0,0,0]))
+                    self.display.layers[0].line(spline[i], spline[i+1], (0,0,0))
 
 if __name__ == "__main__":
     go_example().run()
