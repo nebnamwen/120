@@ -155,24 +155,46 @@ class layer():
 
         self.trivertbuf, self.tricolbuf, self.linevertbuf, self.linecolbuf = glGenBuffers(4)
 
-    def triangle(self, a,b,c, color):
+    def clear(self):
+        self.triverts = []
+        self.tricolors = []
+        self.lineverts = []
+        self.linecolors = []
+
+        self.tridirty = True
+        self.linedirty = True
+ 
+    def triangle(self, key, a,b,c, color):
         self.tridirty = True
 
         for v in (a,b,c):
-            self.triverts.append(v)
-            self.tricolors.append(numpy.array(color))
+            self.triverts.append((key,v))
+            self.tricolors.append((key,numpy.array(color)))
 
-    def line(self, a,b, color):
+    def line(self, key, a,b, color):
         self.linedirty = True
 
         for v in (a,b):
-            self.lineverts.append(v)
-            self.linecolors.append(numpy.array(color))
+            self.lineverts.append((key,v))
+            self.linecolors.append((key,numpy.array(color)))
+
+    def remove(self, *keys):
+        keys = set(keys)
+        
+        self.triverts = [i for i in self.triverts if i[0] not in keys]
+        self.tricolors = [i for i in self.tricolors if i[0] not in keys]
+        self.lineverts = [i for i in self.lineverts if i[0] not in keys]
+        self.linecolors = [i for i in self.linecolors if i[0] not in keys]
+
+        self.tridirty = True
+        self.linedirty = True
 
     @staticmethod
     def _bufferdata(b, l):
         glBindBuffer (GL_ARRAY_BUFFER, b)
-        data = numpy.concatenate(l, dtype=numpy.float32)
+        data = numpy.array([])
+        if l:
+            data = numpy.concatenate([i[1] for i in l], dtype=numpy.float32)
         glBufferData (GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
 
     def draw(self):
