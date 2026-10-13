@@ -8,7 +8,7 @@ class game:
 
     def __init__(self):
         self.display = display(self.bg_color)
-    
+
     def run(self):
         self.running = True
         while self.running:
@@ -17,8 +17,13 @@ class game:
                 self.handle_event(event)
 
             self.display.update()
+            self.update_cursor()
+            self.display.draw()
 
         self.display.quit()
+
+    def update_cursor(self):
+        pass
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:

@@ -1,5 +1,6 @@
 import pygame
 import numpy
+from math import *
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 from OpenGL.GL.EXT.geometry_shader4 import *
@@ -64,10 +65,11 @@ class display:
         bg_color_alpha = bg_color + (1.0,)
         bg_color_string = str(bg_color_alpha)
 
+        self.viewport = (1200,600)
+
         pygame.init()
-        viewport = (1200,600)
-        pygame.display.set_mode (viewport, pygame.OPENGL|pygame.DOUBLEBUF, 24)
-        glViewport (0, 0, *viewport)
+        pygame.display.set_mode (self.viewport, pygame.OPENGL|pygame.DOUBLEBUF, 24)
+        glViewport (0, 0, *self.viewport)
 
         glClearColor(*bg_color_alpha)
 
@@ -117,7 +119,7 @@ class display:
         if keys[pygame.K_LCTRL]: transform[1][3] += 0.01
         if keys[pygame.K_w]: transform[2][3] -= 0.01
         if keys[pygame.K_s]: transform[2][3] += 0.01
-    
+
         transform = numpy.identity(4) + transform - transform.T
         new_view_matrix, _ = numpy.linalg.qr(transform.dot(self.view_matrix))
 
@@ -126,25 +128,47 @@ class display:
                 new_view_matrix[:, i] *= -1
 
         self.view_matrix = new_view_matrix
-    
+
+        mouse = pygame.mouse.get_pos()
+        # these calcuations are the inverse of the projection in the Mercator vertex shader
+        #        atan(position.x, position.z) / PI,
+        #        tan(asin(position.y / length(position.xyz))) / PI_2,
+        # if other projections are added, this should be encapsulated with the projection
+        clx, cly = mouse[0]/self.viewport[0] * 2 - 1, 1 - mouse[1]/self.viewport[1] * 2
+        cry = sin(atan(cly * pi / 2))
+        crx = sin(clx * pi) * sqrt(1 - cry*cry)
+        crz = cos(clx * pi) * sqrt(1 - cry*cry)
+        self.cursor_ray = numpy.array([crx,cry,crz,0])
+
+    def draw(self):
         glLoadMatrixf(numpy.concatenate(self.view_matrix.T, dtype=numpy.float32))
-    
+
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         for l in self.layers:
             l.draw()
-    
+
         pygame.display.flip ()
         pygame.time.wait(10)
 
     def quit(self):
         pygame.quit()
 
+    def cursor_ray_check(self, v, r):
+        v = self.view_matrix.dot(v)
+
+        w = v[3]
+        v[3] = 0
+        z = v.dot(self.cursor_ray)
+        x = numpy.linalg.norm(v - self.cursor_ray * z)
+
+        return w > -0.5 and z > r and x < r
+
 class layer():
     def __init__(self, lineProgram, triProgram):
         self.lineProgram = lineProgram
         self.triProgram = triProgram
-        
+
         self.triverts = []
         self.tricolors = []
         self.lineverts = []
@@ -163,7 +187,7 @@ class layer():
 
         self.tridirty = True
         self.linedirty = True
- 
+
     def triangle(self, key, a,b,c, color):
         self.tridirty = True
 
@@ -180,7 +204,7 @@ class layer():
 
     def remove(self, *keys):
         keys = set(keys)
-        
+
         self.triverts = [i for i in self.triverts if i[0] not in keys]
         self.tricolors = [i for i in self.tricolors if i[0] not in keys]
         self.lineverts = [i for i in self.lineverts if i[0] not in keys]
@@ -216,7 +240,7 @@ class layer():
 
         glBindBuffer (GL_ARRAY_BUFFER, self.tricolbuf)
         glColorPointer (3, GL_FLOAT, 0, None)
-    
+
         glDrawArrays (GL_TRIANGLES, 0, len(self.triverts))
 
         # draw lines
@@ -227,5 +251,5 @@ class layer():
 
         glBindBuffer (GL_ARRAY_BUFFER, self.linecolbuf)
         glColorPointer (3, GL_FLOAT, 0, None)
-    
+
         glDrawArrays (GL_LINES, 0, len(self.lineverts))
