@@ -1,14 +1,15 @@
 import numpy
 from geom import *
+from math import *
 
 def norm(v):
-    return v / numpy.linalg.norm(v)    
+    return v / numpy.linalg.norm(v)
 
 def prism(lyr, key, pos, facecol, linecol, *rows):
     # draws a figure on a location with a main rotation axis (face or edge)
     # figure has the symmetry of a prism with a cross section depending on the location type
     # (triangle for an edge, pentagon for a face)
-    
+    #
     # display layer object
     # key (used to remove object from layer)
     # position (as a string)*
@@ -71,7 +72,7 @@ def prism(lyr, key, pos, facecol, linecol, *rows):
                             face, xmer, ymer = rows[i]
 
                             if face in (True, False): face = (face, face)
-                            
+
                             if face[0] and facecol is not None:
                                 lyr.triangle(key, Vx0, Vy0, Vx1, facecol)
                             if face[1] and facecol is not None:
@@ -84,7 +85,7 @@ def prism(lyr, key, pos, facecol, linecol, *rows):
 def pointfig(lyr, key, pos, facecol, linecol, xyz, lines):
     # draws a figure on a location with regular polygonal symmetry
     # (dodecahedron for a cell, tetrahedron for a vertex)
-
+    #
     # display layer object
     # key (used to remove object from layer)
     # position (as a string)*
@@ -112,7 +113,7 @@ def pointfig(lyr, key, pos, facecol, linecol, xyz, lines):
 
     dx, dy, dz = xyz
     lxy, lyz, lxz = lines
-        
+
     P = coords[0][pos]
     for x in links[0][pos]:
         X = coords[1][x] - P
@@ -132,3 +133,27 @@ def pointfig(lyr, key, pos, facecol, linecol, xyz, lines):
                     lyr.line(key, vY, vZ, linecol)
                 if lxz and linecol is not None:
                     lyr.line(key, vX, vZ, linecol)
+
+def hexaprism(lyr, key, pos, facecol, linecol, length, radius):
+    prism(lyr, key, pos, facecol, linecol, (0,radius,radius/2,False), (True,True,True), (length,radius,radius/2,True), (True,False,False), (length,0,0,False))
+
+def pentaprism(lyr, key, pos, facecol, linecol, length, radius):
+    prism(lyr, key, pos, facecol, linecol, (0,radius,radius,False), (True,False,True), (length,radius,radius,True), (True,False,False), (length,0,0,False))
+
+def decaprism(lyr, key, pos, facecol, linecol, length, radius):
+    ratio = faceedged / facevertd
+    prism(lyr, key, pos, facecol, linecol, (0,radius,radius*ratio,False), (True,True,True), (length,radius,radius*ratio,True), (True,False,False), (length,0,0,False))
+
+def dodecahedron(lyr, key, pos, facecol, linecol, radius):
+    pointfig(lyr, key, pos, facecol, linecol, (radius,radius,radius), (False,True,False))
+
+def icosahedron(lyr, key, pos, facecol, linecol, radius):
+    edgeratio = (cellfaced / celledged) ** 2
+    vertratio = (cellfaced / cellvertd) ** 2
+    pointfig(lyr, key, pos, facecol, linecol, (radius,radius*edgeratio,radius*vertratio), (True,False,False))
+
+def rhombic30hedron(lyr, key, pos, facecol, linecol, radius):
+    raise NotImplementedError
+
+def rhombic12hedron(lyr, key, pos, facecol, linecol, radius):
+    pointfig(lyr, key, pos, facecol, linecol, (radius, radius/sqrt(3), radius/3), (True,True,False))

@@ -5,7 +5,9 @@ from itertools import permutations
 __all__ = ['cells', 'cellcells',
            'faces', 'cellfaces', 'facecells',
            'edges', 'faceedges', 'edgefaces',
-           'verts', 'edgeverts', 'vertedges']
+           'verts', 'edgeverts', 'vertedges',
+           'cellcelld', 'cellfaced', 'celledged', 'cellvertd',
+           'faceedged', 'facevertd', 'edgevertd']
 
 cells = {}
 
@@ -44,10 +46,10 @@ for p in (-1,1):
             for perm in even_perms:
                 cells["".join([phikeys[i][phuz[i]] for i in perm])] = numpy.array([phikeys[i][0]*phuz[i] for i in perm])
 
-first = next(iter(cells))
-adjacent = min([ numpy.linalg.norm(cells[c] - cells[first]) for c in cells if c is not first ])
+a_cell = next(iter(cells))
+cellcelld = min([ numpy.linalg.norm(cells[c] - cells[a_cell]) for c in cells if c is not a_cell ])
 
-cellcells = { c: [ c2 for c2 in cells if numpy.isclose(numpy.linalg.norm(cells[c] - cells[c2]), adjacent) ] for c in cells }
+cellcells = { c: [ c2 for c2 in cells if numpy.isclose(numpy.linalg.norm(cells[c] - cells[c2]), cellcelld) ] for c in cells }
 
 def sumkey(*l):
     return "".join(sorted(l))
@@ -98,3 +100,14 @@ vertedges = defaultdict(list)
 for e, l in edgeverts.items():
     for v in l:
         vertedges[v].append(e)
+
+a_face = cellfaces[a_cell][0]
+a_edge = faceedges[a_face][0]
+a_vert = edgeverts[a_edge][0]
+
+cellfaced = numpy.linalg.norm(faces[a_face] - cells[a_cell])
+celledged = numpy.linalg.norm(edges[a_edge] - cells[a_cell])
+cellvertd = numpy.linalg.norm(verts[a_vert] - cells[a_cell])
+faceedged = numpy.linalg.norm(edges[a_edge] - faces[a_face])
+facevertd = numpy.linalg.norm(verts[a_vert] - faces[a_face])
+edgevertd = numpy.linalg.norm(verts[a_vert] - edges[a_edge])
