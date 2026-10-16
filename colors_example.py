@@ -1,4 +1,5 @@
 from game import *
+from shapes import *
 import random
 
 class colors_example(game):
@@ -16,9 +17,7 @@ class colors_example(game):
                                        (1,0,1),
                                        (0,1,1),
                                        (1,1,1)])
-                for e in faceedges[f]:
-                    self.display.layers[0].line(e, verts[edgeverts[e][0]], verts[edgeverts[e][1]], (1,1,1))
-                    self.display.layers[0].triangle(f, faces[f], verts[edgeverts[e][0]], verts[edgeverts[e][1]], color)
+                facepolygon(self.display.layers[0], f, f, color, (1,1,1), 1)
 
 if __name__ == "__main__":
     colors_example().run()

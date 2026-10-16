@@ -144,6 +144,18 @@ def decaprism(lyr, key, pos, facecol, linecol, length, radius):
     ratio = faceedged / facevertd
     prism(lyr, key, pos, facecol, linecol, (0,radius,radius*ratio,False), (True,True,True), (length,radius,radius*ratio,True), (True,False,False), (length,0,0,False))
 
+def facepolygon(lyr, key, pos, facecol, linecol, radius):
+    prism(lyr, key, pos, facecol, linecol, (0,0,0,False), (True,False,False), (0,radius,radius,True))
+
+def spheroid(lyr, key, pos, facecol, linecol, length, radius):
+    ratio = faceedged / facevertd
+    rows = []
+    for p in range(5):
+        rows.extend([ (sin(p*pi/10)*length, radius*cos(p*pi/10), radius*ratio*cos(p*pi/10), False),
+                      (True, p < 4, p < 4) ])
+    rows.append((length,0,0,False))
+    prism(lyr, key, pos, facecol, linecol, *rows)
+
 def dodecahedron(lyr, key, pos, facecol, linecol, radius):
     pointfig(lyr, key, pos, facecol, linecol, (radius,radius,radius), (False,True,False))
 
@@ -157,3 +169,25 @@ def rhombic30hedron(lyr, key, pos, facecol, linecol, radius):
 
 def rhombic12hedron(lyr, key, pos, facecol, linecol, radius):
     pointfig(lyr, key, pos, facecol, linecol, (radius, radius/sqrt(3), radius/3), (True,True,False))
+
+def dihedralspline(lyr, key, pos, facecol, linecol, radius):
+    f1, f2 = pos
+    e = [ e for e in faceedges[f1] if e in faceedges[f2] ][0]
+    v = verts[edgeverts[e][0]] - edges[e]
+    c = cells[[ c for c in facecells[f1] if c in facecells[f2] ][0]]
+    yradius = radius * edgevertd / cellfaced
+
+    n = 10
+    spine = [ norm((faces[f1] * (1 - x/n) + edges[e] * x/n) * (1 - x/n) +
+                   (edges[e] * (1 - x/n) + faces[f2] * x/n) * x/n)
+                   for x in range(n+1) ]
+    tube = [ [ norm(p + v * radius * cos(t*pi/4) + (p - c) * yradius * sin(t*pi/4))
+               for t in range(8) ] for p in spine ]
+
+    for i in range(n):
+        for j in range(8):
+            if facecol is not None:
+                lyr.triangle(key, tube[i][j], tube[i][j-1], tube[i+1][j], facecol)
+                lyr.triangle(key, tube[i+1][j-1], tube[i][j-1], tube[i+1][j], facecol)
+            if linecol is not None:
+                lyr.line(key, tube[i][j], tube[i+1][j], linecol)
