@@ -35,22 +35,18 @@ class shapes_example(game):
                 self.add_thing(vertex(location=v, color=color))
 
 class rod(thing):
-    layer=1
     def draw(self,layer):
         hexaprism(layer, self.id, self.location, self.color, (1,1,1), 0.6, 0.1)
 
 class token(thing):
-    layer=1
     def draw(self,layer):
         decaprism(layer, self.id, self.location, self.color, (1,1,1), 0.1, 0.6)
 
 class ball(thing):
-    layer=1
     def draw(self,layer):
         icosahedron(layer, self.id, self.location, self.color, (1,1,1), 0.3)
 
 class vertex(thing):
-    layer=1
     def draw(self,layer):
         rhombic12hedron(layer, self.id, self.location, self.color, (1,1,1), 0.45)
 

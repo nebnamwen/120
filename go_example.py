@@ -27,7 +27,7 @@ class edge(thing):
         dihedralspline(layer, self.id, self.location, (0,0,0), None, 0.05)
 
 class stone(thing):
-    layer = 1
+    kind = 'stone'
     def draw(self,layer):
         spheroid(layer, self.id, self.location, self.color, (0.5,0.5,0.5), 0.25, 0.75)
 

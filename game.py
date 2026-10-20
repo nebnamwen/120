@@ -106,10 +106,10 @@ class player:
 
 class thing:
     _id = 0
+    layer = 1
+    kind = None
 
-    def __init__(self, location=None, layer=1, kind=None, color=None, **kwargs):
-        self.layer = layer
-        self.kind = kind
+    def __init__(self, location=None, color=None, **kwargs):
         self.color = color
         self.location = location
 
