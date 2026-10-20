@@ -81,7 +81,7 @@ class display:
         _triProgram = self.shaderProgramForType(mercatorProgram, *TRIANGLES)
 
         # background, object, and cursor layers
-        self.layers = [ layer(_lineProgram, _triProgram) for i in range(3) ]
+        self.layers = [ _layer(_lineProgram, _triProgram) for i in range(3) ]
 
         glEnableClientState (GL_VERTEX_ARRAY)
         glEnableClientState (GL_COLOR_ARRAY)
@@ -165,7 +165,7 @@ class display:
 
         return w > -0.5 and z > r and x < r
 
-class layer():
+class _layer():
     def __init__(self, lineProgram, triProgram):
         self.lineProgram = lineProgram
         self.triProgram = triProgram
@@ -224,13 +224,13 @@ class layer():
 
     def draw(self):
         if self.tridirty:
-            layer._bufferdata(self.trivertbuf, self.triverts)
-            layer._bufferdata(self.tricolbuf, self.tricolors)
+            _layer._bufferdata(self.trivertbuf, self.triverts)
+            _layer._bufferdata(self.tricolbuf, self.tricolors)
             self.tridirty = False
 
         if self.linedirty:
-            layer._bufferdata(self.linevertbuf, self.lineverts)
-            layer._bufferdata(self.linecolbuf, self.linecolors)
+            _layer._bufferdata(self.linevertbuf, self.lineverts)
+            _layer._bufferdata(self.linecolbuf, self.linecolors)
             self.linedirty = False
 
         # draw triangles
