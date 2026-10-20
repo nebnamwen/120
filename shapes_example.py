@@ -17,26 +17,42 @@ class shapes_example(game):
         for e in edges:
             if random.random() < 0.2:
                 color = random.choice(colors)
-
-                hexaprism(self.display.layers[0], e, e, color, (1,1,1), 0.6, 0.1)
+                self.add_thing(rod(location=e, color=color))
 
         for f in faces:
             if random.random() < 0.2:
                 color = random.choice(colors)
-
-                decaprism(self.display.layers[0], f, f, color, (1,1,1), 0.1, 0.6)
+                self.add_thing(token(location=f, color=color))
 
         for c in cells:
             if random.random() < 0.15:
                 color = random.choice(colors)
-
-                icosahedron(self.display.layers[0], c, c, color, (1,1,1), 0.3)
+                self.add_thing(ball(location=c, color=color))
 
         for v in verts:
             if random.random() < 0.15:
                 color = random.choice(colors)
+                self.add_thing(vertex(location=v, color=color))
 
-                rhombic12hedron(self.display.layers[0], v, v, color, (1,1,1), 0.45)
+class rod(thing):
+    layer=1
+    def draw(self,layer):
+        hexaprism(layer, self.id, self.location, self.color, (1,1,1), 0.6, 0.1)
+
+class token(thing):
+    layer=1
+    def draw(self,layer):
+        decaprism(layer, self.id, self.location, self.color, (1,1,1), 0.1, 0.6)
+
+class ball(thing):
+    layer=1
+    def draw(self,layer):
+        icosahedron(layer, self.id, self.location, self.color, (1,1,1), 0.3)
+
+class vertex(thing):
+    layer=1
+    def draw(self,layer):
+        rhombic12hedron(layer, self.id, self.location, self.color, (1,1,1), 0.45)
 
 if __name__ == "__main__":
     shapes_example().run()

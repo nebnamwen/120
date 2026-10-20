@@ -80,7 +80,8 @@ class display:
         _lineProgram = self.shaderProgramForType(mercatorProgram, *LINES)
         _triProgram = self.shaderProgramForType(mercatorProgram, *TRIANGLES)
 
-        self.layers = [ layer(_lineProgram, _triProgram) for i in range(1) ]
+        # background, object, and cursor layers
+        self.layers = [ layer(_lineProgram, _triProgram) for i in range(3) ]
 
         glEnableClientState (GL_VERTEX_ARRAY)
         glEnableClientState (GL_COLOR_ARRAY)

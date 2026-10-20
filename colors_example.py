@@ -17,7 +17,12 @@ class colors_example(game):
                                        (1,0,1),
                                        (0,1,1),
                                        (1,1,1)])
-                facepolygon(self.display.layers[0], f, f, color, (1,1,1), 1)
+                self.add_thing(face(location=f, color=color))
+
+class face(thing):
+    layer = 0
+    def draw(self,layer):
+        facepolygon(layer, self.id, self.location, self.color, (1,1,1), 1)
 
 if __name__ == "__main__":
     colors_example().run()
