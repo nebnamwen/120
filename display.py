@@ -89,6 +89,7 @@ class display:
         glEnable(GL_DEPTH_TEST)
 
         self.view_matrix = numpy.identity(4)
+        self.cursor_ray = numpy.zeros(4)
 
     @staticmethod
     def shaderProgramForType(compiledShaders, input_t, output_t, verts):
@@ -155,15 +156,17 @@ class display:
     def quit(self):
         pygame.quit()
 
-    def cursor_ray_check(self, v, r):
-        v = self.view_matrix.dot(v)
+    def cursor_ray_check(self, points):
+        for k, v, r in points:
+            v = self.view_matrix.dot(v)
 
-        w = v[3]
-        v[3] = 0
-        z = v.dot(self.cursor_ray)
-        x = numpy.linalg.norm(v - self.cursor_ray * z)
+            w = v[3]
+            v[3] = 0
+            z = v.dot(self.cursor_ray)
+            x = numpy.linalg.norm(v - self.cursor_ray * z)
 
-        return w > -0.5 and z > r and x < r
+            if z > r and x < r and w >= 0:
+                yield (-w, k)
 
 class _layer():
     def __init__(self, lineProgram, triProgram):
