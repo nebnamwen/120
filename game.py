@@ -6,7 +6,7 @@ from display import display
 
 class game:
     bg_color = (0, 0, 0)
-    cursor_color = { False: (0.5, 0, 0.5), True: (1, 0, 1) }
+    cursor_color = { False: (0, 0.5, 0), True: (0, 1, 0) }
 
     def __init__(self):
         self.display = display(self.bg_color)
@@ -62,10 +62,19 @@ class game:
             for f in uf: f()
             self.draw_updated_things()
 
-    def do_verb(self):
+    def do_with_undo(self, method):
         self.undo_stack.append([])
-        self.verbs[self.verbn].action(self.cursors[self.cursorn], self.players[self.playern])
+        method()
         if self.undo_stack and not self.undo_stack[-1]: self.undo_stack.pop()
+
+    def player(self):
+        return self.players[self.playern]
+
+    def switched_player(self):
+        pass
+
+    def do_verb(self):
+        self.verbs[self.verbn].action(self.cursors[self.cursorn], self.players[self.playern])
         self.draw_updated_things()
 
     def draw_updated_things(self):
@@ -76,7 +85,8 @@ class game:
             self.display.layers[l].remove(*remove_layers[l])
 
         for t in self.draw_things:
-            t.draw(self.display.layers[t.layer])
+            if t.location is not None:
+                t.draw(self.display.layers[t.layer])
 
         self.remove_things = []
         self.draw_things = []
@@ -99,7 +109,7 @@ class game:
         self.display.quit()
 
     def update_allcursors(self):
-        self.allcursors = list(self.verbs[self.verbn].allcursors())
+        self.allcursors = list(self.verbs[self.verbn].all_cursors())
         self.update_cursors()
 
     def update_cursors(self):
@@ -131,6 +141,9 @@ class game:
 
             if event.key == pygame.K_p:
                 self.playern = (self.playern + 1) % len(self.players)
+                self.do_with_undo(self.switched_player)
+                if self.remove_things or self.draw_things:
+                    self.draw_updated_things()
                 self.update_allcursors()
 
             if event.key == pygame.K_v:
@@ -138,12 +151,13 @@ class game:
                 self.update_allcursors()
 
             if event.key == pygame.K_TAB:
-                self.cursorn = (self.cursorn + 1) % len(self.cursors)
-                self.draw_cursors()
+                if self.cursors:
+                    self.cursorn = (self.cursorn + 1) % len(self.cursors)
+                    self.draw_cursors()
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.cursors:
-                self.do_verb()
+                self.do_with_undo(self.do_verb)
 
 class player:
     def __init__(self, game, name, color):
@@ -167,7 +181,7 @@ class thing:
         pass
 
 class verb:
-    name = "verb"
+    name = None
 
     def __init__(self, game):
         self.game = game
@@ -175,7 +189,7 @@ class verb:
     def cursor_color(self, is_active):
         return self.game.cursor_color[is_active]
 
-    def allcursors(self):
+    def all_cursors(self):
         return []
 
     def draw_cursor(self, location, is_active):

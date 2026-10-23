@@ -164,6 +164,10 @@ def icosahedron(layer, key, pos, facecol, linecol, radius):
     vertratio = (cellfaced / cellvertd) ** 2
     pointfig(layer, key, pos, facecol, linecol, (radius,radius*edgeratio,radius*vertratio), (True,False,False))
 
+def geodesic(layer, key, pos, facecol, linecol, radius):
+    ratio = cellfaced / cellvertd
+    pointfig(layer, key, pos, facecol, linecol, (radius,radius*ratio,radius*ratio), (False,True,True))
+
 def rhombic30hedron(layer, key, pos, facecol, linecol, radius):
     raise NotImplementedError
 

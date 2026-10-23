@@ -7,7 +7,8 @@ __all__ = ['cells', 'cellcells',
            'edges', 'faceedges', 'edgefaces',
            'verts', 'edgeverts', 'vertedges',
            'cellcelld', 'cellfaced', 'celledged', 'cellvertd',
-           'faceedged', 'facevertd', 'edgevertd']
+           'faceedged', 'facevertd', 'edgevertd',
+           'cellcelljump']
 
 cells = {}
 
@@ -111,3 +112,7 @@ cellvertd = numpy.linalg.norm(verts[a_vert] - cells[a_cell])
 faceedged = numpy.linalg.norm(edges[a_edge] - faces[a_face])
 facevertd = numpy.linalg.norm(verts[a_vert] - faces[a_face])
 edgevertd = numpy.linalg.norm(verts[a_vert] - edges[a_edge])
+
+def cellcelljump(a, b):
+    ring = [ c for c in cellcells[a] if c in cellcells[b] ]
+    return [ c for c in cellcells[b] if not [ r for r in ring if c in cellcells[r] ] ][0]

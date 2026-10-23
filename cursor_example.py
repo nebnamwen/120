@@ -20,7 +20,7 @@ class token(thing):
         icosahedron(layer, self.id, self.location, self.color, (1,1,1), 0.75)
 
 class place_token(verb):
-    def allcursors(self):
+    def all_cursors(self):
         return [ (c, cells[c], cellfaced) for c in cells if not self.game.things[c] ]
 
     def draw_cursor(self, layer, c, active):
