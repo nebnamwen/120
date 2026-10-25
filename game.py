@@ -70,6 +70,10 @@ class game:
     def player(self):
         return self.players[self.playern]
 
+    def switch_player(self):
+        self.playern = (self.playern + 1) % len(self.players)
+        self.switched_player()
+
     def switched_player(self):
         pass
 
@@ -140,8 +144,7 @@ class game:
                 self.undo()
 
             if event.key == pygame.K_p:
-                self.playern = (self.playern + 1) % len(self.players)
-                self.do_with_undo(self.switched_player)
+                self.do_with_undo(self.switch_player)
                 if self.remove_things or self.draw_things:
                     self.draw_updated_things()
                 self.update_allcursors()
