@@ -109,6 +109,7 @@ class click(verb):
                               if t.kind == "pawn" and t.color == self.game.player().color ] ]:
                 # stop accepting clicks
                 self.game.update_thing(self.game, verbs=[verb(self.game)])
+                self.game.update_thing(cur, location=None)
 
                 # draw victory stars
                 for h in self.game.home[self.game.player().name]:
