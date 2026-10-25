@@ -65,7 +65,7 @@ class cursor(thing):
 class star(thing):
     kind = "star"
     def draw(self, layer):
-        pointfig(layer, self.id, self.location, (1,1,0), (1,1,1), (0.5, 0.9, 0.5), (True,True,True))
+        pointfig(layer, self.id, self.location, (1,1,0), (1,1,1), (0.8, 0.6, 0.55), (True,True,True))
 
 class click(verb):
     name = "click"
