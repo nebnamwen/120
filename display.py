@@ -165,7 +165,7 @@ class display:
             z = v.dot(self.cursor_ray)
             x = numpy.linalg.norm(v - self.cursor_ray * z)
 
-            if z > r and x < r and w >= 0:
+            if z > r and x < r and w >= -0.5:
                 yield (-w, k)
 
 class _layer():
