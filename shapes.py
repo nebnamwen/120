@@ -134,15 +134,27 @@ def pointfig(layer, key, pos, facecol, linecol, xyz, lines):
                 if lxz and linecol is not None:
                     layer.line(key, vX, vZ, linecol)
 
-def hexaprism(layer, key, pos, facecol, linecol, length, radius):
-    prism(layer, key, pos, facecol, linecol, (0,radius,radius/2,False), (True,True,True), (length,radius,radius/2,True), (True,False,False), (length,0,0,False))
+def hexaprism(layer, key, pos, facecol, linecol, length, radius, subdiv=1):
+    shape = []
+    for i in range(subdiv):
+        shape.extend([(length*i/subdiv,radius,radius/2,False), (True,True,True)])
+    shape.extend([(length,radius,radius/2,True), (True,False,False), (length,0,0,False)])
+    prism(layer, key, pos, facecol, linecol, *shape)
 
-def pentaprism(layer, key, pos, facecol, linecol, length, radius):
-    prism(layer, key, pos, facecol, linecol, (0,radius,radius,False), (True,False,True), (length,radius,radius,True), (True,False,False), (length,0,0,False))
+def pentaprism(layer, key, pos, facecol, linecol, length, radius, subdiv=1):
+    shape = []
+    for i in range(subdiv):
+        shape.extend([(length*i/subdiv,radius,radius,False), (True,False,True)])
+    shape.extend([(length,radius,radius,True), (True,False,False), (length,0,0,False)])
+    prism(layer, key, pos, facecol, linecol, *shape)
 
-def decaprism(layer, key, pos, facecol, linecol, length, radius):
+def decaprism(layer, key, pos, facecol, linecol, length, radius, subdiv=1):
     ratio = faceedged / facevertd
-    prism(layer, key, pos, facecol, linecol, (0,radius,radius*ratio,False), (True,True,True), (length,radius,radius*ratio,True), (True,False,False), (length,0,0,False))
+    shape = []
+    for i in range(subdiv):
+        shape.extend([(length*i/subdiv,radius,radius*ratio,False), (True,True,True)])
+    shape.extend([(length,radius,radius*ratio,True), (True,False,False), (length,0,0,False)])
+    prism(layer, key, pos, facecol, linecol, *shape)
 
 def facepolygon(layer, key, pos, facecol, linecol, radius):
     prism(layer, key, pos, facecol, linecol, (0,0,0,False), (True,False,False), (0,radius,radius,True))

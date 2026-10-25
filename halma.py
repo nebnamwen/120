@@ -41,13 +41,13 @@ class halma(game):
 class edge(thing):
     layer = 0
     def draw(self, layer):
-        decaprism(layer, self.id, self.location, None, (1,1,1), 1, 0.05)
+        decaprism(layer, self.id, self.location, None, (1,1,1), 1, 0.05, 5)
 
 class homerod(thing):
     layer = 0
     kind = "homerod"
     def draw(self, layer):
-        pentaprism(layer, self.id, self.location, self.color, (1,1,1), 1, 0.15)
+        pentaprism(layer, self.id, self.location, self.color, (1,1,1), 1, 0.15, 5)
 
 class pawn(thing):
     kind = "pawn"
