@@ -1,0 +1,22 @@
+== How to play Halma ==
+
+How to run:
+    python halma.py
+
+Object:
+    Move all your pieces to the same-colored home zone on the opposite
+    side of the board, where your opponent's pieces began.
+
+How to move:
+    Move one piece, either a single slide to an adjacent space,
+    or a series of jumps over other pieces (of either color).
+
+How to interact:
+    Click to select a piece.
+    Click on a target space to move there.
+    If the move was a jump, the piece remains selected and can jump again.
+    End your turn by pressing P to switch players.
+
+Ending the game:
+    The game detects when a player wins and decorates their pieces with stars.
+    Close the window to exit.
