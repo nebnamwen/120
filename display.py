@@ -5,7 +5,55 @@ from OpenGL.GL import *
 from OpenGL.GL import shaders
 from OpenGL.GL.EXT.geometry_shader4 import *
 
-vertShader_mercator = '''
+class _shader:
+    LINES = (GL_LINES, GL_LINE_STRIP, 2)
+    TRIANGLES = (GL_TRIANGLES, GL_TRIANGLE_STRIP, 3)
+
+    vertex = None
+    geometry = None
+    fragment = '''
+#version 120
+
+void main()
+{
+    gl_FragColor = gl_Color;
+}
+'''
+
+    def __init__(self, substitutions):
+        if not self.vertex:
+            raise NotImplementedError
+
+        program = {}
+        for code, kind in [ (self.vertex, GL_VERTEX_SHADER),
+                            (self.geometry, GL_GEOMETRY_SHADER),
+                            (self.fragment, GL_FRAGMENT_SHADER) ]:
+            if code is not None:
+                for s in substitutions:
+                    code = code.replace(s, substitutions[s])
+
+                program[kind] = shaders.compileShader(code, kind)
+
+        self.lineProgram = self.shaderProgramForType(program, *self.LINES)
+        self.triProgram = self.shaderProgramForType(program, *self.TRIANGLES)
+
+    @staticmethod
+    def shaderProgramForType(compiledShaders, input_t, output_t, verts):
+        shaderProgram = glCreateProgram()
+
+        for s in compiledShaders:
+            glAttachShader(shaderProgram, compiledShaders[s])
+
+        if GL_GEOMETRY_SHADER in compiledShaders:
+            glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_INPUT_TYPE_EXT, input_t)
+            glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_OUTPUT_TYPE_EXT, output_t)
+            glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_VERTICES_OUT_EXT, verts)
+
+        glLinkProgram(shaderProgram)
+        return shaderProgram
+
+class mercator(_shader):
+    vertex = '''
 #version 120
 
 void main ()
@@ -25,7 +73,7 @@ void main ()
 }
 '''
 
-geomShader_mercator = '''
+    geometry = '''
 #version 120
 #extension GL_EXT_geometry_shader : enable
 
@@ -48,17 +96,18 @@ void main() {
 }
 '''
 
-fragShader_passthrough = '''
+class canvas2D(_shader):
+    vertex = '''
 #version 120
 
 void main()
 {
-    gl_FragColor = gl_Color;
+    float x = (gl_Vertex.x / __VIEWPORT_WIDTH__) * 2.0 - 1.0;
+    float y = 1.0 - (gl_Vertex.y / __VIEWPORT_HEIGHT__) * 2.0;
+    gl_Position = vec4(x, y, 0.0, 1.0);
+    gl_FrontColor = gl_Color;
 }
 '''
-
-LINES = (GL_LINES, GL_LINE_STRIP, 2)
-TRIANGLES = (GL_TRIANGLES, GL_TRIANGLE_STRIP, 3)
 
 class display:
     def __init__(self, bg_color):
@@ -73,37 +122,20 @@ class display:
 
         glClearColor(*bg_color_alpha)
 
-        mercatorProgram = ( shaders.compileShader(vertShader_mercator.replace('__BACKGROUND_COLOR__', bg_color_string), GL_VERTEX_SHADER),
-                            shaders.compileShader(geomShader_mercator, GL_GEOMETRY_SHADER),
-                            shaders.compileShader(fragShader_passthrough, GL_FRAGMENT_SHADER) )
-
-        _lineProgram = self.shaderProgramForType(mercatorProgram, *LINES)
-        _triProgram = self.shaderProgramForType(mercatorProgram, *TRIANGLES)
+        mercatorProgram = mercator({'__BACKGROUND_COLOR__': bg_color_string})
 
         # background, object, and cursor layers
-        self.layers = [ _layer(_lineProgram, _triProgram) for i in range(3) ]
+        self.layers = [ _layer(mercatorProgram, 4) for i in range(3) ]
+
+        canvas2Dprogram = canvas2D({'__VIEWPORT_WIDTH__': str(self.viewport[0]),
+                                    '__VIEWPORT_HEIGHT__': str(self.viewport[1])})
+        self.overlayers = [ _layer(canvas2Dprogram, 2) for i in range(2) ]
 
         glEnableClientState (GL_VERTEX_ARRAY)
         glEnableClientState (GL_COLOR_ARRAY)
 
-        glEnable(GL_DEPTH_TEST)
-
         self.view_matrix = numpy.identity(4)
         self.cursor_ray = numpy.zeros(4)
-
-    @staticmethod
-    def shaderProgramForType(compiledShaders, input_t, output_t, verts):
-        shaderProgram = glCreateProgram()
-
-        for s in compiledShaders:
-            glAttachShader(shaderProgram, s)
-
-        glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_INPUT_TYPE_EXT, input_t)
-        glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_OUTPUT_TYPE_EXT, output_t)
-        glProgramParameteriEXT(shaderProgram, GL_GEOMETRY_VERTICES_OUT_EXT, verts)
-
-        glLinkProgram(shaderProgram)
-        return shaderProgram
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -147,7 +179,12 @@ class display:
 
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        glEnable(GL_DEPTH_TEST)
         for l in self.layers:
+            l.draw()
+            
+        glDisable(GL_DEPTH_TEST)
+        for l in self.overlayers:
             l.draw()
 
         pygame.display.flip ()
@@ -169,9 +206,9 @@ class display:
                 yield (-w, k)
 
 class _layer():
-    def __init__(self, lineProgram, triProgram):
-        self.lineProgram = lineProgram
-        self.triProgram = triProgram
+    def __init__(self, shader, dimension):
+        self.shader = shader
+        self.dimension = dimension
 
         self.triverts = []
         self.tricolors = []
@@ -237,10 +274,10 @@ class _layer():
             self.linedirty = False
 
         # draw triangles
-        glUseProgram(self.triProgram)
+        glUseProgram(self.shader.triProgram)
 
         glBindBuffer(GL_ARRAY_BUFFER, self.trivertbuf)
-        glVertexPointer(4, GL_FLOAT, 0, None)
+        glVertexPointer(self.dimension, GL_FLOAT, 0, None)
 
         glBindBuffer (GL_ARRAY_BUFFER, self.tricolbuf)
         glColorPointer (3, GL_FLOAT, 0, None)
@@ -248,10 +285,10 @@ class _layer():
         glDrawArrays (GL_TRIANGLES, 0, len(self.triverts))
 
         # draw lines
-        glUseProgram(self.lineProgram)
+        glUseProgram(self.shader.lineProgram)
 
         glBindBuffer (GL_ARRAY_BUFFER, self.linevertbuf)
-        glVertexPointer (4, GL_FLOAT, 0, None)
+        glVertexPointer (self.dimension, GL_FLOAT, 0, None)
 
         glBindBuffer (GL_ARRAY_BUFFER, self.linecolbuf)
         glColorPointer (3, GL_FLOAT, 0, None)
