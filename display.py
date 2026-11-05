@@ -110,7 +110,7 @@ void main()
 '''
 
 class display:
-    def __init__(self, bg_color):
+    def __init__(self, bg_color, name):
         bg_color_alpha = bg_color + (1.0,)
         bg_color_string = str(bg_color_alpha)
 
@@ -118,6 +118,7 @@ class display:
 
         pygame.init()
         pygame.display.set_mode (self.viewport, pygame.OPENGL|pygame.DOUBLEBUF, 24)
+        pygame.display.set_caption(name)
         glViewport (0, 0, *self.viewport)
 
         glClearColor(*bg_color_alpha)
@@ -233,14 +234,14 @@ class _layer():
         self.tridirty = True
 
         for v in (a,b,c):
-            self.triverts.append((key,v))
+            self.triverts.append((key,numpy.array(v)))
             self.tricolors.append((key,numpy.array(color)))
 
     def line(self, key, a,b, color):
         self.linedirty = True
 
         for v in (a,b):
-            self.lineverts.append((key,v))
+            self.lineverts.append((key,numpy.array(v)))
             self.linecolors.append((key,numpy.array(color)))
 
     def remove(self, *keys):

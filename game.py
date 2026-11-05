@@ -3,13 +3,16 @@ from collections import defaultdict
 
 from geom import *
 from display import display
+from font import render_text
 
 class game:
+    name = "120"
     bg_color = (0, 0, 0)
+    fg_color = (1, 1, 1)
     cursor_color = { False: (0, 0.5, 0), True: (0, 1, 0) }
 
     def __init__(self):
-        self.display = display(self.bg_color)
+        self.display = display(self.bg_color, self.name)
 
         self.undo_stack = []
         self.draw_things = []
@@ -115,6 +118,7 @@ class game:
     def update_allcursors(self):
         self.allcursors = list(self.verbs[self.verbn].all_cursors())
         self.update_cursors()
+        self.draw_overlay()
 
     def update_cursors(self):
         new_cursors = [ c[1] for c in sorted(self.display.cursor_ray_check(self.allcursors)) ]
@@ -133,6 +137,49 @@ class game:
             # and not pygame.mouse.get_pressed()[0]
             # else self.cursors:
             self.verbs[self.verbn].draw_cursor(layer, c, c == self.cursors[self.cursorn])
+
+    def draw_overlay(self):
+        margin = 5
+        text_h = 20
+        text_w = 15
+
+        bgl = self.display.overlayers[0]
+        fgl = self.display.overlayers[1]
+        bgl.clear()
+        fgl.clear()
+
+        fgl.triangle("pcolor",
+                     (margin, margin), (margin+text_h,margin), (margin,margin+text_h),
+                     self.players[self.playern].color)
+        fgl.triangle("pcolor",
+                     (margin+text_h,margin+text_h), (margin+text_h,margin), (margin,margin+text_h),
+                     self.players[self.playern].color)
+        fgl.line("pcolor", (margin, margin), (margin+text_h,margin), self.fg_color)
+        fgl.line("pcolor", (margin, margin), (margin,margin+text_h), self.fg_color)
+        fgl.line("pcolor", (margin+text_h,margin+text_h), (margin+text_h,margin), self.fg_color)
+        fgl.line("pcolor", (margin+text_h,margin+text_h), (margin,margin+text_h), self.fg_color)
+
+        text_end = render_text(fgl, self.players[self.playern].name,
+                               (margin+text_h+text_w, margin), (text_w, text_h),
+                               self.fg_color)
+
+        if self.verbs[self.verbn].name:
+            text_end = render_text(fgl, self.verbs[self.verbn].name,
+                                   (text_end+text_w, margin), (text_w, text_h),
+                                   self.fg_color)
+        
+        bgl.triangle("bgcolor",
+                     (0,0), (0,margin+text_h+margin), (text_end+margin+margin,0),
+                     self.bg_color)
+        bgl.triangle("bgcolor",
+                     (text_end+margin,margin+text_h+margin), (0,margin+text_h+margin), (text_end+margin+margin,0),
+                     self.bg_color)
+        bgl.line("bgcolor",
+                 (text_end+margin,margin+text_h+margin), (0,margin+text_h+margin),
+                 self.fg_color)
+        bgl.line("bgcolor",
+                 (text_end+margin,margin+text_h+margin), (text_end+margin+margin,0),
+                 self.fg_color)
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:

@@ -3,6 +3,8 @@ from geom import *
 from shapes import *
 
 class halma(game):
+    name = "Halma"
+
     def __init__(self):
         super().__init__()
         self.verbs = [ click(self) ]
@@ -68,8 +70,6 @@ class star(thing):
         pointfig(layer, self.id, self.location, (1,1,0), (1,1,1), (0.8, 0.6, 0.55), (True,True,True))
 
 class click(verb):
-    name = "click"
-
     def all_cursors(self):
         C = self.game.cursor.location
         if C is None:
